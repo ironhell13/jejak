@@ -375,7 +375,7 @@ function renderReportList() {
         });
 
         return `
-            <article class="bg-surface-bright border-[1.5px] border-outline-variant rounded-[24px] overflow-hidden flex flex-col md:flex-row shadow-sm hover:shadow-md transition-shadow">
+            <article onclick="window.openReportDetail(${item.id})" class="bg-surface-bright border-[1.5px] border-outline-variant rounded-[24px] overflow-hidden flex flex-col md:flex-row shadow-sm hover:shadow-md transition-all cursor-pointer hover:border-primary/50">
                 <!-- Status Header (Mobile) / Side (Desktop) -->
                 <div class="bg-surface-container-low px-4 py-4 md:w-32 md:border-r-[1.5px] border-outline-variant flex flex-row md:flex-col items-center md:items-start justify-between md:justify-start gap-2 border-b-[1.5px] md:border-b-0 shrink-0">
                     <div class="flex items-center gap-1.5">
@@ -480,7 +480,7 @@ function renderSolvedStream() {
         });
 
         return `
-            <div class="bg-surface border-[1.5px] border-outline-variant rounded-[24px] overflow-hidden flex flex-col md:flex-row shadow-sm">
+            <div onclick="window.openReportDetail(${item.id})" class="bg-surface border-[1.5px] border-outline-variant rounded-[24px] overflow-hidden flex flex-col md:flex-row shadow-sm cursor-pointer hover:shadow-md hover:border-primary/50 transition-all">
               <div class="md:w-1/3 h-48 md:h-auto bg-surface-container-high relative shrink-0">
                 <img class="w-full h-full object-cover grayscale opacity-80" src="${item.foto_path}" alt="Pekerjaan Selesai">
                 <div class="absolute top-4 left-4 bg-primary-container text-on-primary-container font-inter text-xs font-bold px-3 py-1 rounded-full border-[1.5px] border-on-primary-container flex items-center gap-1">
@@ -497,6 +497,89 @@ function renderSolvedStream() {
         `;
     }).join('');
 }
+
+// 6.5. Modal Report Detail
+window.openReportDetail = (id) => {
+    const report = reportsList.find(r => r.id === id);
+    if (!report) return;
+
+    let modal = document.getElementById('report-detail-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'report-detail-modal';
+        modal.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-black/60 hidden px-4';
+        document.body.appendChild(modal);
+    }
+
+    const dateReported = new Date(report.created_at).toLocaleString('id-ID', {
+        day: 'numeric', month: 'long', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+    });
+
+    const locationText = report.alamat_lengkap && report.alamat_lengkap !== "Lokasi tidak diketahui" 
+        ? report.alamat_lengkap 
+        : `Kel: ${report.kelurahan || '-'}, Kec: ${report.kecamatan || '-'}, ${report.kota || '-'} (${report.lat?.toFixed(4) || 0}, ${report.lng?.toFixed(4) || 0})`;
+
+    modal.innerHTML = `
+        <div class="bg-surface w-full max-w-xl rounded-[24px] overflow-hidden flex flex-col max-h-[90vh] shadow-xl relative" onclick="event.stopPropagation()">
+            <div class="px-6 py-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+                <h3 class="font-space font-bold text-lg text-on-surface flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">receipt_long</span>
+                    Detail Laporan #JJK-${report.id}
+                </h3>
+                <button onclick="document.getElementById('report-detail-modal').classList.add('hidden')" class="w-8 h-8 rounded-full bg-surface-container hover:bg-surface-container-highest flex items-center justify-center text-on-surface-variant transition-colors">
+                    <span class="material-symbols-outlined text-sm">close</span>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                <div class="mb-5 rounded-xl overflow-hidden border border-outline-variant max-h-64 flex items-center justify-center bg-surface-container-lowest relative">
+                    <img src="${report.foto_path}" class="object-contain w-full h-full" alt="Laporan Kerusakan">
+                    <div class="absolute bottom-3 right-3 bg-surface-container text-on-surface-variant text-[10px] font-bold px-2 py-1 rounded shadow-sm opacity-80">
+                        LAT ${report.lat?.toFixed(4) || '-'} / LNG ${report.lng?.toFixed(4) || '-'}
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-5">
+                    <div class="bg-surface-container-low p-3.5 rounded-xl border border-outline-variant">
+                        <span class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Kategori</span>
+                        <span class="font-inter font-semibold text-on-surface">${report.kategori}</span>
+                    </div>
+                    <div class="bg-surface-container-low p-3.5 rounded-xl border border-outline-variant">
+                        <span class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Status & Bahaya</span>
+                        <div class="flex items-center gap-1.5 mt-0.5">
+                            <span class="w-2 h-2 rounded-full ${report.tingkat_bahaya === 'Tinggi' ? 'bg-error' : report.tingkat_bahaya === 'Sedang' ? 'bg-amber-500' : 'bg-primary'}"></span>
+                            <span class="font-inter font-semibold text-on-surface">${report.status} | ${report.tingkat_bahaya}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-surface-container-low p-4 rounded-xl border border-outline-variant mb-5">
+                    <span class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-3">Lokasi & Waktu</span>
+                    <p class="font-inter text-sm text-on-surface mb-3 flex items-start gap-2.5">
+                        <span class="material-symbols-outlined text-[16px] text-primary mt-0.5">location_on</span>
+                        <span class="leading-relaxed">${locationText}</span>
+                    </p>
+                    <p class="font-inter text-sm text-on-surface flex items-start gap-2.5">
+                        <span class="material-symbols-outlined text-[16px] text-primary mt-0.5">schedule</span>
+                        <span>${dateReported}</span>
+                    </p>
+                </div>
+
+                <div class="bg-surface-container-low p-4 rounded-xl border border-outline-variant">
+                    <span class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-2">Deskripsi Otomatis AI</span>
+                    <p class="font-inter text-sm text-on-surface leading-relaxed">${report.deskripsi_ai}</p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Close modal if clicking outside
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.classList.add('hidden');
+    };
+    
+    modal.classList.remove('hidden');
+};
 
 // 7. Navigation Controller
 window.showView = (viewName) => {

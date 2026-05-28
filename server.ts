@@ -267,6 +267,34 @@ Respons HARUS berupa JSON valid tanpa markdown code block.`;
         return res.status(400).json({ status: 'error', message: 'Data tidak lengkap' });
       }
 
+      let kelurahan = "Tidak diketahui";
+      let kecamatan = "Tidak diketahui";
+      let kota = "Tidak diketahui";
+      let alamatLengkap = "Lokasi tidak diketahui";
+
+      if (lat && lng) {
+        try {
+          console.log(`Fetching reverse geocode for ${lat}, ${lng}...`);
+          const nomUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+          const nomRes = await fetch(nomUrl, {
+            headers: { 'User-Agent': 'JejakApp/1.0 (contact@ridwan.id)' }
+          });
+          
+          if (nomRes.ok) {
+            const nomData = await nomRes.json();
+            if (nomData && nomData.address) {
+              const addr = nomData.address;
+              kelurahan = addr.village || addr.suburb || addr.neighbourhood || addr.hamlet || kelurahan;
+              kecamatan = addr.city_district || addr.state_district || addr.county || kecamatan;
+              kota = addr.city || addr.town || addr.municipality || kota;
+              alamatLengkap = nomData.display_name || alamatLengkap;
+            }
+          }
+        } catch (geoErr) {
+          console.warn("Reverse geocoding failed:", geoErr);
+        }
+      }
+
       const newReport = {
         id: reports.length + 1,
         user_id: reporter ? reporter.id : 1,
@@ -275,6 +303,10 @@ Respons HARUS berupa JSON valid tanpa markdown code block.`;
         foto_path: foto,
         lat: lat,
         lng: lng,
+        kelurahan: kelurahan,
+        kecamatan: kecamatan,
+        kota: kota,
+        alamat_lengkap: alamatLengkap,
         kategori: aiResult.kategori || "Infrastruktur",
         tingkat_bahaya: aiResult.tingkat_bahaya || "Sedang",
         deskripsi_ai: aiResult.deskripsi || "Laporan masuk.",
