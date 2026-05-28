@@ -184,9 +184,14 @@ Respons HARUS berupa JSON valid tanpa markdown code block.`;
           const errMsg = modelErr?.message || "";
           console.warn(`Model ${modelName} failed: ${errMsg.substring(0, 200)}`);
 
-          // If rate-limited (429), try next model
-          if (errMsg.includes("429") || errMsg.includes("RESOURCE_EXHAUSTED")) {
-            console.log(`Rate limited on ${modelName}, trying next model...`);
+          // If rate-limited (429) or high demand (503), try next model
+          if (
+            errMsg.includes("429") || 
+            errMsg.includes("RESOURCE_EXHAUSTED") || 
+            errMsg.includes("503") || 
+            errMsg.toLowerCase().includes("high demand")
+          ) {
+            console.log(`Rate limited / High demand on ${modelName}, trying next model...`);
             continue;
           }
 
