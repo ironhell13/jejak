@@ -86,7 +86,7 @@ class ReportController extends BaseController
             return $this->getFallbackAnalysis();
         }
 
-        $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey;
+        $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" . $apiKey;
 
         // Siapkan gambar (Base64)
         $imageData = base64_encode(file_get_contents($filePath));

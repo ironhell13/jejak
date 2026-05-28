@@ -143,7 +143,7 @@ Respons HARUS berupa JSON valid tanpa markdown code block.`;
 
       // Try multiple models as fallback if one is rate-limited
       const modelsToTry = [
-        "gemini-1.5-flash",
+        "gemini-2.5-flash",
         "gemini-2.0-flash",
         "gemini-2.0-flash-lite",
       ];
