@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Jejak - Kota Responsif</title>
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/index.css">
+    
+    <style>
+      .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+      .hide-scrollbar::-webkit-scrollbar { display: none; }
+      .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      
+      .hud-scan {
+        background: linear-gradient(to bottom, transparent 0%, rgba(145, 205, 153, 0.4) 50%, transparent 100%);
+        animation: scanline 2.5s linear infinite;
+      }
+      @keyframes scanline {
+        0% { transform: translateY(-100%); }
+        100% { transform: translateY(100%); }
+      }
+      
+      .pulse-border {
+        animation: pulse-border 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      @keyframes pulse-border {
+        0%, 100% { border-color: rgba(145, 205, 153, 1); }
+        50% { border-color: rgba(145, 205, 153, 0.3); }
+      }
+      
+      .animate-spin-slow {
+        animation: spin 8s linear infinite;
+      }
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body class="bg-surface text-on-surface antialiased pt-[72px] pb-[90px] md:pb-6 min-h-screen flex flex-col font-inter">
+    
+    <!-- TopAppBar -->
+    <header class="fixed top-0 w-full z-50 bg-surface border-b-[1.5px] border-outline-variant">
+      <div class="flex justify-between items-center px-4 md:px-10 py-4 max-w-7xl mx-auto w-full">
+        <div class="flex items-center gap-2 cursor-pointer" onclick="showView('dashboard')">
+          <span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 1;">location_on</span>
+          <span class="font-space text-2xl font-black tracking-tighter text-on-surface">JEJAK</span>
+        </div>
+        
+        <!-- Desktop Nav Cluster -->
+        <nav class="hidden md:flex items-center gap-6">
+          <button id="desk-nav-dashboard" onclick="showView('dashboard')" class="text-primary font-bold hover:bg-surface-container transition-colors px-3 py-2 rounded-lg">Beranda</button>
+          <button id="desk-nav-home" onclick="showView('home')" class="text-on-surface-variant hover:bg-surface-container transition-colors px-3 py-2 rounded-lg">Lapor</button>
+          <button id="desk-nav-history" onclick="showView('history')" class="text-on-surface-variant hover:bg-surface-container transition-colors px-3 py-2 rounded-lg">Jejak</button>
+        </nav>
+        
+        <div class="flex items-center gap-3">
+          <button id="status-location" class="font-inter text-[10px] sm:text-xs font-semibold text-primary bg-surface-container px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border-[1.5px] border-outline-variant hover:bg-surface-container-highest transition-colors flex items-center gap-1.5 sm:gap-2">
+            <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+            <span>6.2730, 106.7246</span>
+          </button>
+          
+          <!-- User Profile Display Menu -->
+          <div id="user-profile-menu" class="relative hidden">
+            <button id="btn-profile-toggle" onclick="toggleProfileDropdown()" class="font-inter text-xs font-semibold text-on-surface bg-surface-container px-3 py-1.5 rounded-full border-[1.5px] border-outline-variant hover:bg-surface-container-highest transition-colors flex items-center gap-2 cursor-pointer outline-none">
+              <div id="user-avatar" class="w-6 h-6 rounded-full bg-primary text-on-primary font-bold text-xs flex items-center justify-center uppercase">R</div>
+              <span id="user-display-name" class="max-w-[70px] sm:max-w-[110px] truncate">Ridwan BTC</span>
+              <span class="material-symbols-outlined text-[16px]">keyboard_arrow_down</span>
+            </button>
+            <!-- Dropdown Menu -->
+            <div id="profile-dropdown" class="absolute right-0 mt-2 w-48 bg-surface rounded-xl border-[1.5px] border-outline-variant shadow-lg py-2 z-50 hidden transition-all duration-200">
+              <div class="px-4 py-2 border-b-[1.5px] border-outline-variant">
+                <p id="dropdown-username" class="font-inter text-xs font-bold text-on-surface">@ridwanbtc</p>
+                <p id="dropdown-email" class="font-inter text-[10px] text-on-surface-variant truncate">ridwanbtc1@gmail.com</p>
+              </div>
+              <button onclick="handleLogout()" class="w-full text-left px-4 py-2 text-xs font-semibold text-error hover:bg-error-container/30 transition-colors flex items-center gap-2 cursor-pointer">
+                <span class="material-symbols-outlined text-sm">logout</span>
+                Keluar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- AI Loading Overlay -->
+    <div id="ai-loader" class="fixed inset-0 bg-surface/95 z-[60] flex flex-col items-center justify-center p-8 hidden animate-in fade-in transition-all duration-300">
+      <div class="relative w-24 h-24 mb-6">
+        <div class="absolute inset-0 border-4 border-primary rounded-full animate-ping opacity-20"></div>
+        <div class="absolute inset-2 border-2 border-dashed border-primary rounded-full animate-spin-slow"></div>
+        <div class="absolute inset-0 flex items-center justify-center font-space font-black text-xl text-primary">AI</div>
+      </div>
+      <h3 class="text-xl font-space font-black uppercase tracking-tighter mb-2 text-on-surface">Menganalisis Lerapor</h3>
+      <p id="loader-desc" class="text-on-surface-variant text-center text-xs font-inter font-medium max-w-xs leading-relaxed">Gemini AI sedang menganalisis foto Anda untuk menentukan kategori, deskripsi teknis, dan tingkat bahaya secara langsung.</p>
+    </div>
+
+    <!-- Main Container -->
+    <main id="app-container" class="flex-grow max-w-4xl mx-auto w-full px-4 md:px-10 py-6">
+      
+      <!-- VIEW: DASHBOARD (Home) -->
+      <section id="dashboard-view" class="space-y-8">
+        <!-- Hero Section -->
+        <div class="pt-4">
+          <h1 class="font-space text-5xl md:text-6xl font-black tracking-tighter text-on-surface leading-none mb-3">KOTA RESPONSIF.</h1>
+          <p class="font-inter text-base text-on-surface-variant max-w-2xl">Platform kolaborasi warga dan pemerintah. Pantau, laporkan, dan wujudkan kota yang lebih baik bersama.</p>
+        </div>
+
+        <!-- Metric Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Resolved -->
+          <div class="bg-primary-container p-6 rounded-[24px] border-[1.5px] border-outline-variant flex flex-col justify-between min-h-[160px]">
+            <div class="flex justify-between items-start">
+              <span class="material-symbols-outlined text-on-primary-container text-3xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+              <span class="font-inter text-xs font-semibold px-3 py-1 rounded-full bg-surface-container-lowest text-on-surface border-[1.5px] border-outline-variant">Bulan Ini</span>
+            </div>
+            <div>
+              <h2 id="resolved-stat" class="font-space text-3xl font-bold text-on-primary-container">1.240</h2>
+              <p class="font-inter text-sm font-medium text-on-primary-container opacity-90">Laporan Tuntas</p>
+            </div>
+          </div>
+          <!-- In Progress -->
+          <div class="bg-surface p-6 rounded-[24px] border-[1.5px] border-outline-variant flex flex-col justify-between min-h-[160px]">
+            <div class="flex justify-between items-start">
+              <span class="material-symbols-outlined text-outline text-3xl" style="font-variation-settings: 'FILL' 1;">pending</span>
+            </div>
+            <div>
+              <h2 id="pending-stat" class="font-space text-3xl font-bold text-on-surface">42</h2>
+              <p class="font-inter text-sm font-medium text-on-surface-variant">Sedang Diproses</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CTA Button -->
+        <div>
+          <button onclick="showView('home')" class="w-full bg-primary text-on-primary font-space font-semibold tracking-wide py-4 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-surface-tint transition-colors active:scale-[0.98] border-[1.5px] border-primary cursor-pointer shadow-lg shadow-primary/10">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">photo_camera</span>
+            Lapor Sekarang
+          </button>
+        </div>
+
+        <!-- Feed Section -->
+        <div>
+          <div class="flex justify-between items-end mb-6">
+            <h3 class="font-space text-lg font-bold text-on-surface border-b-[1.5px] border-outline pb-2 flex-grow mr-4">Baru Saja Diperbaiki</h3>
+            <button onclick="showView('history')" class="font-inter text-sm font-semibold text-primary hover:underline">Lihat Semua</button>
+          </div>
+          
+          <div id="solved-stream" class="flex flex-col gap-4">
+            <!-- Dynamically populated solved stream items or fallback list -->
+            <div class="bg-surface border-[1.5px] border-outline-variant rounded-[24px] overflow-hidden flex flex-col md:flex-row">
+              <div class="md:w-1/3 h-48 md:h-auto bg-surface-container-high relative">
+                <img class="w-full h-full object-cover grayscale opacity-80" src="https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=600&auto=format&fit=crop" alt="Asphalt road restoration">
+                <div class="absolute top-4 left-4 bg-primary-container text-on-primary-container font-inter text-xs font-bold px-3 py-1 rounded-full border-[1.5px] border-on-primary-container flex items-center gap-1">
+                  <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">build</span>
+                  FIXED
+                </div>
+              </div>
+              <div class="p-6 flex flex-col justify-center flex-grow">
+                <p class="font-inter text-xs text-on-surface-variant mb-2">Dinas Pekerjaan Umum • Baru Saja</p>
+                <h4 class="font-space text-lg font-bold text-on-surface mb-2">Perbaikan Jalan Berlubang Jl. Sudirman</h4>
+                <p class="font-inter text-sm text-on-surface-variant">Laporan #JJK-1502 telah diselesaikan secara tuntas. Pengaspalan ulang dan pemadatan jalan telah rampung dilakukan.</p>
+              </div>
+            </div>
+
+            <div class="bg-surface border-[1.5px] border-outline-variant rounded-[24px] overflow-hidden flex flex-col md:flex-row">
+              <div class="md:w-1/3 h-48 md:h-auto bg-surface-container-high relative">
+                <img class="w-full h-full object-cover grayscale opacity-80" src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=600&auto=format&fit=crop" alt="PJU replacement works">
+                <div class="absolute top-4 left-4 bg-primary-container text-on-primary-container font-inter text-xs font-bold px-3 py-1 rounded-full border-[1.5px] border-on-primary-container flex items-center gap-1">
+                  <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">build</span>
+                  FIXED
+                </div>
+              </div>
+              <div class="p-6 flex flex-col justify-center flex-grow">
+                <p class="font-inter text-xs text-on-surface-variant mb-2">Suku Dinas Bina Marga • 5 Jam yang lalu</p>
+                <h4 class="font-space text-lg font-bold text-on-surface mb-2">Lampu PJU Taman Suropati Menyala</h4>
+                <p class="font-inter text-sm text-on-surface-variant">Laporan #JJK-1402 telah ditindaklanjuti. Penggantian beberapa unit bohlam LED utama dan perbaikan gardu listrik selesai.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: HOME (Lapor / Camera Upload) -->
+      <section id="home-view" class="space-y-6 hidden">
+        <div class="text-center md:text-left pt-4">
+          <h1 class="font-space text-3xl font-semibold mb-2">Laporan Baru</h1>
+          <p class="font-inter text-sm text-on-surface-variant">Arahkan kamera ke area kerusakan infrastruktur publik.</p>
+        </div>
+
+        <!-- Drag & Drop / Camera Capture Area -->
+        <div id="drop-area" class="relative aspect-[4/3] w-full rounded-[24px] border-2 border-dashed border-primary bg-surface-container-lowest flex flex-col items-center justify-center overflow-hidden group cursor-pointer pulse-border hover:bg-surface-container-low transition-colors duration-300">
+          
+          <!-- Default State -->
+          <div id="default-state" class="flex flex-col items-center justify-center text-primary group-hover:scale-105 transition-transform duration-300 z-10 p-6 text-center">
+            <span class="material-symbols-outlined text-[64px] mb-4">photo_camera</span>
+            <p class="font-inter text-base font-bold text-on-surface mb-1">Ambil Foto Kerusakan</p>
+            <p class="font-inter text-xs text-on-surface-variant">atau seret file gambar ke sini (Mendukung Kamera ponsel)</p>
+          </div>
+          
+          <!-- Hidden Input for File Handling -->
+          <input type="file" id="camera-input" accept="image/*" capture="environment" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30">
+          
+          <!-- Watermark Canvas & Canvas Container (Shown only after upload) -->
+          <canvas id="watermark-canvas" class="absolute inset-0 w-full h-full object-cover hidden z-10"></canvas>
+
+          <!-- Scanning HUD Overlay (Only visible when simulating or starting capture) -->
+          <div id="scanning-hud" class="absolute inset-0 z-20 pointer-events-none hidden flex-col justify-between p-4 bg-black/15">
+            <!-- Corners -->
+            <div class="flex justify-between w-full">
+              <div class="w-8 h-8 border-t-2 border-l-2 border-primary-container"></div>
+              <div class="w-8 h-8 border-t-2 border-r-2 border-primary-container"></div>
+            </div>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <div class="w-32 h-32 border border-dashed border-primary-container rounded-full animate-spin-slow"></div>
+              <div class="absolute w-full h-[20%] hud-scan"></div>
+              <span class="material-symbols-outlined text-primary-container text-5xl absolute animate-pulse">qr_code_scanner</span>
+            </div>
+            <div class="flex justify-between w-full">
+              <div class="w-8 h-8 border-b-2 border-l-2 border-primary-container"></div>
+              <div class="w-8 h-8 border-b-2 border-r-2 border-primary-container"></div>
+            </div>
+          </div>
+
+          <!-- Image Footer Stamp Overlay (Watermark Stamp) -->
+          <div id="image-stamp" class="absolute bottom-0 left-0 w-full bg-primary-container/90 backdrop-blur-sm p-4 flex justify-between items-center text-on-primary-container border-t border-on-primary-container/20 z-20 hidden">
+            <div class="flex flex-col">
+              <span class="font-inter text-[10px] tracking-widest uppercase font-semibold opacity-75">Terekam</span>
+              <span id="stamp-time" class="font-space text-sm font-bold">14:02:45 / 28.05.26</span>
+            </div>
+            <div class="flex flex-col text-right">
+              <span class="font-inter text-[10px] tracking-widest uppercase font-semibold opacity-75">Koordinat GPS</span>
+              <span id="stamp-gps" class="font-space text-sm font-bold">LAT -6.27 / LNG 106.72</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions panel (Previewed once image selected) -->
+        <div id="preview-container" class="flex flex-col gap-3 mt-4 hidden">
+          <button id="btn-submit" class="w-full bg-primary text-on-primary font-space font-bold text-base py-4 rounded-xl border border-primary hover:bg-on-primary-container transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer active:translate-y-[2px]">
+            <span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+            Proses Laporan
+          </button>
+          <button id="btn-cancel" class="w-full bg-surface text-on-surface font-inter font-semibold text-sm py-4 rounded-xl border-[1.5px] border-outline hover:bg-surface-container-low transition-colors cursor-pointer">
+            Batal
+          </button>
+        </div>
+      </section>
+
+      <!-- VIEW: HISTORY (Jejak / Reports) -->
+      <section id="history-view" class="space-y-6 hidden">
+        <div class="pt-4">
+          <h1 class="font-space text-3xl font-semibold text-on-surface">Community Stream</h1>
+          <p class="font-inter text-sm text-on-surface-variant mt-1">Status laporan infrastruktur di sekitar wilayah Anda secara real-time.</p>
+        </div>
+
+        <!-- Category Scrollable Chips -->
+        <div id="filter-chips" class="flex overflow-x-auto gap-3 pb-2 hide-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
+          <button onclick="filterReports('Semua')" id="chip-Semua" class="shrink-0 bg-primary-container text-on-primary-container font-inter text-sm font-semibold px-4 py-2 rounded-full border-[1.5px] border-primary-container transition-all cursor-pointer">
+            Semua
+          </button>
+          <button onclick="filterReports('Jalan Berlubang')" id="chip-Jalan" class="shrink-0 bg-transparent text-on-surface-variant font-inter text-sm font-semibold px-4 py-2 rounded-full border-[1.5px] border-outline-variant hover:bg-surface-container-highest transition-all cursor-pointer">
+            Jalan Berlubang
+          </button>
+          <button onclick="filterReports('Tutup Got Hilang')" id="chip-Got" class="shrink-0 bg-transparent text-on-surface-variant font-inter text-sm font-semibold px-4 py-2 rounded-full border-[1.5px] border-outline-variant hover:bg-surface-container-highest transition-all cursor-pointer">
+            Tutup Got Hilang
+          </button>
+          <button onclick="filterReports('Trotoar Rusak')" id="chip-Trotoar" class="shrink-0 bg-transparent text-on-surface-variant font-inter text-sm font-semibold px-4 py-2 rounded-full border-[1.5px] border-outline-variant hover:bg-surface-container-highest transition-all cursor-pointer">
+            Trotoar Rusak
+          </button>
+          <button onclick="filterReports('Lainnya')" id="chip-Lainnya" class="shrink-0 bg-transparent text-on-surface-variant font-inter text-sm font-semibold px-4 py-2 rounded-full border-[1.5px] border-outline-variant hover:bg-surface-container-highest transition-all cursor-pointer">
+            Lainnya
+          </button>
+        </div>
+
+        <!-- Stream Cards -->
+        <div id="history-list" class="space-y-4">
+          <!-- Fallback or dynamic content goes here -->
+          <p class="text-on-surface-variant text-sm font-semibold py-12 text-center border-[1.5px] border-dashed border-outline-variant rounded-[24px]">
+            Memuat laporan Anda...
+          </p>
+        </div>
+      </section>
+      
+    </main>
+
+    <!-- BottomNavBar (Mobile Only) -->
+    <nav class="md:hidden fixed bottom-6 left-6 right-6 bg-surface border-[1.5px] border-outline-variant flex justify-around p-3 z-50 shadow-xl rounded-2xl">
+      <!-- Tab: Beranda -->
+      <button onclick="showView('dashboard')" id="nav-dashboard" class="flex-grow flex flex-col items-center justify-center text-on-surface-variant transition-all hover:text-primary relative py-1">
+        <span class="material-symbols-outlined">home</span>
+        <span class="font-inter text-[10px] font-semibold mt-1">Beranda</span>
+        <div class="nav-dot absolute -bottom-1 w-1.5 h-1.5 bg-primary rounded-full hidden"></div>
+      </button>
+
+      <!-- Tab: Lapor -->
+      <button onclick="showView('home')" id="nav-home" class="flex-grow flex flex-col items-center justify-center text-on-surface-variant transition-all hover:text-primary relative py-1">
+        <span class="material-symbols-outlined">add_circle</span>
+        <span class="font-inter text-[10px] font-semibold mt-1">Lapor</span>
+        <div class="nav-dot absolute -bottom-1 w-1.5 h-1.5 bg-primary rounded-full hidden"></div>
+      </button>
+
+      <!-- Tab: Jejak -->
+      <button onclick="showView('history')" id="nav-history" class="flex-grow flex flex-col items-center justify-center text-on-surface-variant transition-all hover:text-primary relative py-1">
+        <span class="material-symbols-outlined">history</span>
+        <span class="font-inter text-[10px] font-semibold mt-1">Jejak</span>
+        <div class="nav-dot absolute -bottom-1 w-1.5 h-1.5 bg-primary rounded-full hidden"></div>
+      </button>
+    </nav>
+
+    <!-- VIEW: AUTH (Login & Sign Up) -->
+    <section id="auth-view" class="fixed inset-0 bg-background flex flex-col justify-center items-center p-4 z-[100] transition-opacity duration-300">
+      <div class="w-full max-w-sm bg-surface p-8 rounded-[32px] border-[1.5px] border-outline-variant shadow-xl relative overflow-hidden">
+        
+        <!-- Decoration or subtle grid -->
+        <div class="absolute -top-10 -right-10 w-32 h-32 bg-primary-container/20 rounded-full blur-2xl"></div>
+        <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-primary-container/20 rounded-full blur-2xl"></div>
+
+        <!-- Logo -->
+        <div class="flex flex-col items-center justify-center mb-6 relative">
+          <div class="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center text-on-primary mb-2 shadow-md shadow-primary/20">
+            <span class="material-symbols-outlined text-2xl" id="auth-logo-icon" style="font-variation-settings: 'FILL' 1;">location_on</span>
+          </div>
+          <span class="font-space text-3xl font-black tracking-tighter text-on-surface">JEJAK</span>
+          <p class="font-inter text-xs text-on-surface-variant mt-1 text-center font-medium">Lapor dan Pantau Kerusakan Kota</p>
+        </div>
+
+        <!-- Sliding Tabs Switcher -->
+        <div class="flex bg-surface-container-low p-1 rounded-xl border-[1.5px] border-outline-variant mb-6">
+          <button id="tab-login" onclick="switchAuthTab('login')" class="flex-1 text-center font-space text-xs font-bold py-2 rounded-lg bg-primary-container text-on-primary-container transition-all cursor-pointer">
+            Masuk
+          </button>
+          <button id="tab-signup" onclick="switchAuthTab('signup')" class="flex-1 text-center font-space text-xs font-semibold py-2 rounded-lg text-on-surface-variant hover:text-on-surface transition-all cursor-pointer">
+            Daftar
+          </button>
+        </div>
+
+        <!-- FORM: MASUK (Login) -->
+        <form id="form-login" class="space-y-4">
+          <div>
+            <label class="block font-space text-xs font-semibold text-on-surface mb-1.5" for="login-username">Username atau Email</label>
+            <input type="text" id="login-username" class="w-full bg-surface-container-lowest border-[1.5px] border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary rounded-xl px-4 py-2.5 font-inter text-xs outline-none transition-all placeholder:text-on-surface-variant/50" placeholder="Masukkan username/email..." required>
+          </div>
+          <div>
+            <label class="block font-space text-xs font-semibold text-on-surface mb-1.5" for="login-password">Kata Sandi</label>
+            <input type="password" id="login-password" class="w-full bg-surface-container-lowest border-[1.5px] border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary rounded-xl px-4 py-2.5 font-inter text-xs outline-none transition-all placeholder:text-on-surface-variant/50" placeholder="Masukkan kata sandi..." required>
+          </div>
+          <button type="submit" class="w-full bg-primary text-on-primary font-space font-bold text-xs py-3 rounded-xl hover:bg-surface-tint border border-primary transition-all shadow-md shadow-primary/10 active:scale-[0.98] cursor-pointer mt-2 flex items-center justify-center gap-1.5">
+            <span class="material-symbols-outlined text-sm">login</span>
+            Masuk Sekarang
+          </button>
+        </form>
+
+        <!-- FORM: DAFTAR (Sign Up) -->
+        <form id="form-signup" class="space-y-4 hidden">
+          <div>
+            <label class="block font-space text-xs font-semibold text-on-surface mb-1.5" for="signup-name">Nama Lengkap</label>
+            <input type="text" id="signup-name" class="w-full bg-surface-container-lowest border-[1.5px] border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary rounded-xl px-4 py-2.5 font-inter text-xs outline-none transition-all placeholder:text-on-surface-variant/50" placeholder="Nama lengkap Anda..." required>
+          </div>
+          <div>
+            <label class="block font-space text-xs font-semibold text-on-surface mb-1.5" for="signup-email">Alamat Email</label>
+            <input type="email" id="signup-email" class="w-full bg-surface-container-lowest border-[1.5px] border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary rounded-xl px-4 py-2.5 font-inter text-xs outline-none transition-all placeholder:text-on-surface-variant/50" placeholder="nama@email.com" required>
+          </div>
+          <div>
+            <label class="block font-space text-xs font-semibold text-on-surface mb-1.5" for="signup-username">Username</label>
+            <input type="text" id="signup-username" class="w-full bg-surface-container-lowest border-[1.5px] border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary rounded-xl px-4 py-2.5 font-inter text-xs outline-none transition-all placeholder:text-on-surface-variant/50" placeholder="Kombinasi huruf/angka..." required>
+          </div>
+          <div>
+            <label class="block font-space text-xs font-semibold text-on-surface mb-1.5" for="signup-password">Kata Sandi</label>
+            <input type="password" id="signup-password" class="w-full bg-surface-container-lowest border-[1.5px] border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary rounded-xl px-4 py-2.5 font-inter text-xs outline-none transition-all placeholder:text-on-surface-variant/50" placeholder="Sandi minimal 6 karakter..." required>
+          </div>
+          <button type="submit" class="w-full bg-primary text-on-primary font-space font-bold text-xs py-3 rounded-xl hover:bg-surface-tint border border-primary transition-all shadow-md shadow-primary/10 active:scale-[0.98] cursor-pointer mt-2 flex items-center justify-center gap-1.5">
+            <span class="material-symbols-outlined text-sm">person_add</span>
+            Buat Akun Baru
+          </button>
+        </form>
+
+        <div class="relative flex py-4 items-center">
+          <div class="flex-grow border-t border-outline-variant"></div>
+          <span class="flex-shrink mx-3 text-[10px] font-semibold font-inter text-on-surface-variant uppercase tracking-wider">Atau Masuk Melalui</span>
+          <div class="flex-grow border-t border-outline-variant"></div>
+        </div>
+
+        <!-- Google Custom Google Sign-In Button -->
+        <button id="btn-google-login" onclick="triggerGoogleOAuthMock()" class="w-full bg-surface-bright border-[1.5px] border-outline-variant hover:bg-surface-container-low text-on-surface font-inter font-semibold text-xs py-3 rounded-xl flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-[0.98]">
+          <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.85z" />
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 2.18 7.06l3.66 2.85c.87-2.6 3.3-4.53 6.16-4.53z" />
+          </svg>
+          Google Account
+        </button>
+
+      </div>
+    </section>
+
+    <!-- GOOGLE ACCOUNT CHOOSER MODAL -->
+    <div id="google-chooser-modal" class="fixed inset-0 bg-black/60 z-[110] flex items-center justify-center p-4 hidden animate-in fade-in duration-200">
+      <div class="bg-white text-gray-950 w-full max-w-sm rounded-[24px] shadow-2xl p-6 border border-gray-100 flex flex-col font-sans transition-all duration-300 transform scale-95" id="google-chooser-card">
+        <!-- Google Header -->
+        <div class="flex flex-col items-center justify-center mb-6">
+          <svg class="h-6 w-auto mb-2" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.85z" />
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 2.18 7.06l3.66 2.85c.87-2.6 3.3-4.53 6.16-4.53z" />
+          </svg>
+          <h2 class="text-sm font-semibold text-center tracking-tight text-gray-800">Login dengan Google</h2>
+          <p class="text-[10px] text-gray-400 mt-1">untuk melanjutkan ke Jejak - Kota Responsif</p>
+        </div>
+
+        <!-- Account List -->
+        <div class="space-y-2 mb-6">
+          
+          <!-- Authentic user email is used directly here! -->
+          <button onclick="selectGoogleAccount('Ridwan BTC', 'ridwanbtc1@gmail.com')" class="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-all border border-gray-100 text-left cursor-pointer group">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-sm">R</div>
+              <div>
+                <p class="text-xs font-bold text-gray-800 group-hover:text-blue-600 transition-colors">Ridwan BTC</p>
+                <p class="text-[10px] text-gray-500 font-semibold">ridwanbtc1@gmail.com</p>
+              </div>
+            </div>
+            <span class="material-symbols-outlined text-gray-400 text-sm">chevron_right</span>
+          </button>
+          
+          <!-- Secondary account option -->
+          <button onclick="selectGoogleAccount('Warga Kota', 'wargatestimoni@gmail.com')" class="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-all border border-gray-100 text-left cursor-pointer group font-sans">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-sm">W</div>
+              <div>
+                <p class="text-xs font-bold text-gray-800 group-hover:text-emerald-600 transition-colors">Warga Kota</p>
+                <p class="text-[10px] text-gray-500 font-semibold">wargatestimoni@gmail.com</p>
+              </div>
+            </div>
+            <span class="material-symbols-outlined text-gray-400 text-sm">chevron_right</span>
+          </button>
+          
+        </div>
+
+        <!-- Footer -->
+        <div class="flex justify-between items-center text-[10px] text-gray-400 border-t border-gray-100 pt-4">
+          <button onclick="closeGoogleChooser()" class="text-gray-500 hover:underline cursor-pointer font-medium hover:text-gray-800">Batal</button>
+          <span class="flex items-center gap-1">
+            <span class="material-symbols-outlined text-[12px]">security</span> Safe Authentication
+          </span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Script loading -->
+    <script type="module" src="/src/app.js"></script>
+  </body>
+</html>

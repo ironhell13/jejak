@@ -1,0 +1,14 @@
+{
+  "name": "JEJAK",
+  "description": "Platform pelaporan infrastruktur publik berbasis komunitas dengan sistem eskalasi birokrasi otomatis dan verifikasi AI (Google Gemini Vision).",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API",
+    "AI Vision Verification",
+    "Automated Public Escalation",
+    "PWA"
+  ]
+}
